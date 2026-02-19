@@ -136,14 +136,15 @@ progress_bar "Starting"
 info "Updating package index..."
 apt-get update -y >/dev/null 2>&1 || warn "apt update had issues, continuing."
 
-info "Ensuring user ${SSH_USER}..."
+info "Checking user ${SSH_USER}..."
 if id "$SSH_USER" &>/dev/null; then
-  warn "User ${SSH_USER} already exists; updating password and sudo."
+  warn "User ${SSH_USER} already exists; skipping user creation and password change. Doing hardening only."
+  usermod -aG sudo "$SSH_USER" 2>/dev/null || true
 else
   adduser --gecos "" --disabled-password "$SSH_USER"
+  echo "${SSH_USER}:${SSH_PASS}" | chpasswd
+  usermod -aG sudo "$SSH_USER" 2>/dev/null || true
 fi
-echo "${SSH_USER}:${SSH_PASS}" | chpasswd
-usermod -aG sudo "$SSH_USER" 2>/dev/null || true
 
 SSH_DIR="/home/${SSH_USER}/.ssh"
 mkdir -p "$SSH_DIR"

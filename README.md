@@ -1,203 +1,150 @@
 # SSH Hardening
 
-One-command SSH lockdown for **Debian** and **Ubuntu**. Stop leaving your server on the default setup that every bot on the internet is built to exploit.
+Lock down SSH on **Debian/Ubuntu** in one run: new port, no root login, key-based auth, optional UFW and Fail2Ban.
 
 ---
 
-## Your server is a target right now
+## Quick start (step-by-step)
 
-**Every server with SSH on port 22 and root login enabled gets hit.** Automated scanners probe thousands of IPs per minute. Weak or default SSH config is how most breaches start: one guessed or leaked password, and someone else owns your box.
+### 1️⃣ Install git (if needed)
 
-**If you don’t harden SSH:**
+On Debian/Ubuntu:
 
-| You leave it as-is | What actually happens |
-|--------------------|------------------------|
-| SSH on port **22** | Bots hammer your login 24/7. One weak password and you’re compromised. |
-| **Root login** allowed | Attacker gets full control in one step. No separate user, no audit trail. |
-| **Password-only** auth | Brute-force and credential stuffing work. Keys don’t get “guessed.” |
-| **No firewall** | Every open port is discoverable and attackable. No default-deny. |
-| **No Fail2Ban** | Unlimited login attempts. No temporary bans, no rate limiting. |
+```bash
+sudo apt-get install -y git
+```
 
-**Real consequences:** Unauthorized access, cryptominers, backdoors, data theft, or your server turned into a relay for attacks. Fixing it after a breach is always harder and more expensive than locking the door now.
-
----
-
-## What you get when you use this script
-
-- **No more root over SSH** — Dedicated user + sudo. One less way to own the whole system.
-- **SSH off port 22** — Moves to a port you choose (or random). Cuts a lot of automated noise and targeted brute-force.
-- **Key-based auth** — Use `SSH_PUB_KEY`; script can disable password logins so keys are the only way in.
-- **Optional UFW** — Default-deny incoming, allow only SSH (your port) and any extra ports you need.
-- **Optional Fail2Ban** — Bans IPs after failed SSH attempts. Slows down and deters brute-force.
-
-**Truth:** This script applies common, sensible hardening in one run. It does **not** replace regular updates, strong keys, or good access control—but it closes the biggest SSH holes fast.
-
----
-
-## OS support
-
-Debian and Ubuntu use the same package and service names (apt, ssh/sshd, ufw, fail2ban), so the script is written for that family. Only the row below is officially tested; others are expected to work but not yet verified.
-
-| OS | Supported | Tested | Notes | Git install command |
-|----|-----------|--------|-------|---------------------|
-| **Debian 12 x64** | ✅ | ✅ | Fully tested; recommended. | `sudo apt-get install -y git` |
-| Debian 11 x64 | ✅ | ❌ | Same stack as 12; expected to work. | `sudo apt-get install -y git` |
-| Debian 10 x64 | ✅ | ❌ | Expected to work. | `sudo apt-get install -y git` |
-| Ubuntu 24.04 LTS x64 | ✅ | ❌ | Debian-based; expected to work. | `sudo apt-get install -y git` |
-| Ubuntu 22.04 LTS x64 | ✅ | ❌ | Debian-based; expected to work. | `sudo apt-get install -y git` |
-| Ubuntu 20.04 LTS x64 | ✅ | ❌ | Debian-based; expected to work. | `sudo apt-get install -y git` |
-| Other Debian/Ubuntu derivatives | ✅ | ❌ | Use at your own risk. | `sudo apt-get install -y git` |
-| RHEL / Rocky / Alma / CentOS | ❌ | ❌ | Coming soon. | `sudo yum install -y git` |
-| Fedora | ❌ | ❌ | Coming soon. | `sudo dnf install -y git` |
-| Other (e.g. Arch, openSUSE) | ❌ | ❌ | Coming soon. | Arch: `sudo pacman -Syu git`, openSUSE: `sudo zypper install -y git` |
-
-If you run the script on an unsupported OS, it will detect it and print **Coming soon 😊** instead of making changes. No harm done.
-
----
-
-## How to run it (step-by-step)
-
-**1. Get the repo and go into the folder**
-
-If you have **git** installed:
+### 2️⃣ Clone the repo and enter the folder
 
 ```bash
 git clone https://github.com/spookey007/ssh-hardening.git
 cd ssh-hardening
 ```
 
-If you **don’t have git** yet, download the repo as a ZIP from GitHub, extract it, then `cd ssh-hardening`. When you run the script in step 2, it will **install git first** (as a separate step before anything else), so you’ll have it for next time.
-
-**2. Run the script as root with your settings**
-
-You **must** use `sudo`. Set at least:
-
-- `SSH_USER` — name of the admin user to create (e.g. `myadmin`)
-- `SSH_PASS` — that user’s password (use a strong one)
-- `SSH_PORT` — port for SSH (e.g. `49221`). **Remember this port**—you’ll use it to connect later.
-- `SSH_PUB_KEY` — your SSH **public** key (strongly recommended so you don’t get locked out).
-
-Optional:
-
-- `PORTS` — extra ports/ranges for UFW, comma-separated (e.g. `5060,5061,10000-20000`). Only used if you say “yes” to UFW.
-
-**Example (replace the values with yours):**
+### 3️⃣ Make the scripts executable
 
 ```bash
-sudo SSH_USER=myadmin \
+chmod +x ssh_harden.sh script.sh
+```
+
+If you skip this, you may get **"command not found"** when running `./ssh_harden.sh`. If that happens, use step 5 with `sudo bash ssh_harden.sh` instead.
+
+### 4️⃣ Create an SSH key on your PC (to paste as `SSH_PUB_KEY`)
+
+**Linux / macOS**
+
+```bash
+ssh-keygen -t ed25519 -C "your_email@example.com"
+```
+
+Press Enter for default path (`~/.ssh/id_ed25519`). Optional: set a passphrase.
+
+Show your **public** key (copy this into `SSH_PUB_KEY`):
+
+```bash
+cat ~/.ssh/id_ed25519.pub
+```
+
+**Windows (PowerShell or Git Bash)**
+
+```powershell
+ssh-keygen -t ed25519 -C "your_email@example.com"
+```
+
+Press Enter for default path. Optional: set a passphrase.
+
+Show your **public** key:
+
+- **PowerShell:** `Get-Content $env:USERPROFILE\.ssh\id_ed25519.pub`
+- **CMD:** `type %USERPROFILE%\.ssh\id_ed25519.pub`
+
+Copy the whole line (starts with `ssh-ed25519 ...`). That is your `SSH_PUB_KEY`.
+
+### 5️⃣ Run the script as root
+
+Replace the values with yours, then run:
+
+```bash
+sudo SSH_USER=kamaileo \
      SSH_PASS='YourStrongPassword123!' \
      SSH_PORT=49221 \
      PORTS="5060,5061,10000-20000" \
-     SSH_PUB_KEY="ssh-rsa AAAAB3NzaC1yc2E... your-key-comment" \
+     SSH_PUB_KEY="ssh-ed25519 AAAA... fahad@yourmachine" \
      ./ssh_harden.sh
 ```
 
-**3. Follow the prompts**
-
-- The script shows detected OS (Debian/Ubuntu), user, port, and whether a key is set. Confirm to continue.
-- It asks: **Configure UFW firewall?** — Say yes unless you already manage a firewall.
-- It asks: **Install and configure Fail2Ban?** — Say yes for brute-force protection.
-
-**4. After it finishes**
-
-In a **new** terminal (keep your current session open), test login:
+If you get **"command not found"**, use:
 
 ```bash
-ssh -p 49221 myadmin@YOUR_SERVER_IP
+sudo bash ssh_harden.sh
 ```
 
-Use the **port** and **user** you set. Only close your original session once you’ve confirmed you can log in and use `sudo`.
+(with the same `SSH_USER=... SSH_PASS=...` etc. in front).
 
----
+### 6️⃣ Follow the prompts
 
-## What the script actually does (truthful)
+- Confirm the settings (user, port, key).
+- Choose **Y** or **n** for UFW and Fail2Ban.
 
-### First (runs separately)
+### 7️⃣ Test login (before closing your current session)
 
-- **Git:** Checks if `git` is installed. If not, runs `apt-get update` and `apt-get install -y git`, then continues. This step runs alone before any other hardening.
+In a **new** terminal:
 
-### Every run
-
-- **User:** Creates `SSH_USER` if it doesn’t exist (or updates password and sudo if it does). Adds the user to the `sudo` group.
-- **SSH directory:** Creates `~/.ssh` for that user with mode `700`. If you passed `SSH_PUB_KEY`, it writes `authorized_keys` with mode `600`.
-- **sshd_config:** Backs up `/etc/ssh/sshd_config` to a timestamped file, then sets:
-  - `Port` → your chosen port  
-  - `PermitRootLogin no`  
-  - `PasswordAuthentication` → `no` if you have a key (or if you confirm when asked); otherwise leaves it `yes` so you don’t lock yourself out  
-  - `PubkeyAuthentication yes`  
-  - `ChallengeResponseAuthentication no`  
-  - `UsePAM yes`  
-- Runs `sshd -t` to check config, then restarts `ssh` or `sshd`.
-
-### If you choose “Configure UFW”
-
-- Installs UFW if missing (skips if already installed).
-- Sets default deny incoming, allow outgoing.
-- Allows your SSH port and any ports/ranges in `PORTS`.
-- Enables UFW.
-
-### If you choose “Install and configure Fail2Ban”
-
-- Installs Fail2Ban if missing (skips if already installed).
-- Enables and starts the service.
-- Adds a jail in `/etc/fail2ban/jail.d/ssh-hardening.conf` for your SSH port (maxretry 5, bantime 3600).
-- Restarts Fail2Ban.
-
-### Optional
-
-- **Debian:** runs `./debian/ssh_harden_extra.sh` if that file exists and is executable.
-- **Ubuntu:** runs `./ubuntu/ssh_harden_extra.sh` if that file exists and is executable.
-
----
-
-## Requirements
-
-- **OS:** Debian or Ubuntu (or something that sets `ID`/`ID_LIKE` in `/etc/os-release`).
-- **Privilege:** Root (e.g. `sudo`).
-- **Network:** Outbound HTTPS for `apt` if the script installs UFW or Fail2Ban.
-
----
-
-## Environment variables (reference)
-
-| Variable | Required | Default | What it does |
-|----------|----------|---------|--------------|
-| `SSH_USER` | No | `adminuser` | Username to create (or update) for SSH and sudo. |
-| `SSH_PASS` | No | `ChangeMe123!` | That user’s password. **Always set a strong one.** |
-| `SSH_PORT` | No | Random 10000–65535 | Port for SSH. You’ll use this in `ssh -p PORT ...`. |
-| `PORTS` | No | *(none)* | Comma-separated ports or ranges for UFW (e.g. `5060,10000-20000`). Used only if you enable UFW. |
-| `SSH_PUB_KEY` | **Strongly recommended** | *(none)* | Your SSH public key. Prevents lockout when password auth is disabled. |
-
----
-
-## Important security notes
-
-1. **Avoid lockout** — Set `SSH_PUB_KEY` before disabling password auth, or ensure you have console access (e.g. provider’s VNC) and test in a new session before closing the old one.
-2. **Test first** — Prefer a test VM or disposable server before running on production.
-3. **Secrets** — `SSH_PASS` and `SSH_PUB_KEY` can show up in process lists and shell history. Use a protected env file or clear history if that’s a concern.
-4. **No warranty** — You are responsible for your systems. Review the script and understand the changes before running.
-
----
-
-## Repo layout
-
-```
-ssh-hardening/
-├── README.md
-├── ssh_harden.sh   # Entry point — run this
-├── script.sh       # Main logic
-├── debian/         # Optional: ssh_harden_extra.sh
-└── ubuntu/         # Optional: ssh_harden_extra.sh
+```bash
+ssh -p 49221 kamaileo@YOUR_SERVER_IP
 ```
 
+Use the **port** and **user** you set. Only close the original session after you confirm login and `sudo` work.
+
 ---
 
-## License
+## If the user already exists
 
-Use and modify as you like. No warranty; you are responsible for your systems and data.
+If `SSH_USER` is already on the server, the script **does not** create a new user and **does not** change the password. It only:
+
+- Ensures the user is in the `sudo` group
+- Updates `~/.ssh/authorized_keys` if you pass `SSH_PUB_KEY`
+- Hardens SSH config, and optionally UFW and Fail2Ban
+
+So you can run it again to “harden only” without touching the existing password.
+
+---
+
+## What you need to set
+
+| Variable | Example | What it does |
+|----------|---------|--------------|
+| `SSH_USER` | `kamaileo` | Username (created if missing; if it exists, password is left unchanged). |
+| `SSH_PASS` | `'YourPass123!'` | Password for **new** users only. Use a strong one. |
+| `SSH_PORT` | `49221` | SSH port. You’ll use: `ssh -p 49221 user@server`. |
+| `PORTS` | `"5060,5061,10000-20000"` | Extra ports for UFW (optional). |
+| `SSH_PUB_KEY` | `"ssh-ed25519 AAAA..."` | Your **public** key. Strongly recommended so you don’t get locked out. |
+
+---
+
+## OS support & git install
+
+| OS | Supported | Tested | Git install |
+|----|-----------|--------|-------------|
+| **Debian 12 x64** | ✅ | ✅ | `sudo apt-get install -y git` |
+| Debian 11/10, Ubuntu 24/22/20 | ✅ | ❌ | `sudo apt-get install -y git` |
+| RHEL / Rocky / Alma / CentOS | ❌ | ❌ | `sudo yum install -y git` |
+| Fedora | ❌ | ❌ | `sudo dnf install -y git` |
+| Arch | ❌ | ❌ | `sudo pacman -Syu git` |
+| openSUSE | ❌ | ❌ | `sudo zypper install -y git` |
+
+On unsupported OSes the script prints **Coming soon 😊** and exits without changing anything.
+
+---
+
+## Security notes
+
+- Set **`SSH_PUB_KEY`** so you can still log in after password auth is disabled.
+- Test on a **VM or disposable server** first.
+- Keep your current session open until you’ve tested `ssh -p PORT user@server`.
 
 ---
 
 ## Author
 
-- **GitHub:** [@spookey007](https://github.com/spookey007)
+[@spookey007](https://github.com/spookey007)
