@@ -86,8 +86,24 @@ if [[ "$DISTRO_ID" == debian || "$DISTRO_ID" == ubuntu ]]; then
 elif [[ "$DISTRO_LIKE" == *debian* ]]; then
   DISTRO_FAMILY="debian"
 else
-  err "Debian/Ubuntu only (got: ${DISTRO_ID})."
-  exit 1
+  clear 2>/dev/null || true
+  echo
+  echo -e "${YELLOW}Detected OS: ${BOLD}${DISTRO_ID}${RESET}${YELLOW}.${RESET}"
+  echo -e "${GREEN}Support for this OS is coming soon 😊${RESET}"
+  echo
+  exit 0
+fi
+
+# -----------------------------------------------------------------------------
+# Ensure git is installed (runs separately, before any other steps)
+# -----------------------------------------------------------------------------
+if ! command -v git &>/dev/null; then
+  info "Git not found. Installing git..."
+  apt-get update -y -qq 2>/dev/null || true
+  apt-get install -y git >/dev/null 2>&1 || { err "Failed to install git."; exit 1; }
+  success "Git installed."
+else
+  success "Git already installed."
 fi
 
 SSH_USER=${SSH_USER:-"adminuser"}

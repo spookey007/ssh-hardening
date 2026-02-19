@@ -34,14 +34,39 @@ One-command SSH lockdown for **Debian** and **Ubuntu**. Stop leaving your server
 
 ---
 
+## OS support
+
+Debian and Ubuntu use the same package and service names (apt, ssh/sshd, ufw, fail2ban), so the script is written for that family. Only the row below is officially tested; others are expected to work but not yet verified.
+
+| OS | Supported | Tested | Notes |
+|----|-----------|--------|-------|
+| **Debian 12 x64** | ✅ | ✅ | Fully tested; recommended. |
+| Debian 11 x64 | ✅ | ❌ | Same stack as 12; expected to work. |
+| Debian 10 x64 | ✅ | ❌ | Expected to work. |
+| Ubuntu 24.04 LTS x64 | ✅ | ❌ | Debian-based; expected to work. |
+| Ubuntu 22.04 LTS x64 | ✅ | ❌ | Debian-based; expected to work. |
+| Ubuntu 20.04 LTS x64 | ✅ | ❌ | Debian-based; expected to work. |
+| Other Debian/Ubuntu derivatives | ✅ | ❌ | Use at your own risk. |
+| RHEL / Rocky / Alma / CentOS | ❌ | ❌ | Coming soon. |
+| Fedora | ❌ | ❌ | Coming soon. |
+| Other (e.g. Arch, openSUSE) | ❌ | ❌ | Coming soon. |
+
+If you run the script on an unsupported OS, it will detect it and print **Coming soon 😊** instead of making changes. No harm done.
+
+---
+
 ## How to run it (step-by-step)
 
-**1. Clone the repo and go into the folder**
+**1. Get the repo and go into the folder**
+
+If you have **git** installed:
 
 ```bash
 git clone https://github.com/spookey007/ssh-hardening.git
 cd ssh-hardening
 ```
+
+If you **don’t have git** yet, download the repo as a ZIP from GitHub, extract it, then `cd ssh-hardening`. When you run the script in step 2, it will **install git first** (as a separate step before anything else), so you’ll have it for next time.
 
 **2. Run the script as root with your settings**
 
@@ -86,6 +111,10 @@ Use the **port** and **user** you set. Only close your original session once you
 ---
 
 ## What the script actually does (truthful)
+
+### First (runs separately)
+
+- **Git:** Checks if `git` is installed. If not, runs `apt-get update` and `apt-get install -y git`, then continues. This step runs alone before any other hardening.
 
 ### Every run
 
