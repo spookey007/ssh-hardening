@@ -4,6 +4,14 @@ Lock down SSH on **Debian/Ubuntu** in one run: new port, no root login, key-base
 
 ---
 
+## What you’ll see
+
+When you run the script, it detects your OS and shows the settings before asking to continue:
+
+![SSH Hardening — script prompt](assets/ssh-hardening-prompt.png)
+
+---
+
 ## Quick start (step-by-step)
 
 ### 1️⃣ Install git (if needed)
@@ -69,7 +77,7 @@ sudo SSH_USER=kamaileo \
      SSH_PASS='YourStrongPassword123!' \
      SSH_PORT=49221 \
      PORTS="5060,5061,10000-20000" \
-     SSH_PUB_KEY="ssh-ed25519 AAAA... fahad@yourmachine" \
+     SSH_PUB_KEY="ssh-ed25519 AAAA... you@yourmachine" \
      ./ssh_harden.sh
 ```
 
@@ -88,13 +96,27 @@ sudo bash ssh_harden.sh
 
 ### 7️⃣ Test login (before closing your current session)
 
-In a **new** terminal:
+In a **new** terminal, connect using the **new port** (not 22):
 
 ```bash
 ssh -p 49221 kamaileo@YOUR_SERVER_IP
 ```
 
 Use the **port** and **user** you set. Only close the original session after you confirm login and `sudo` work.
+
+---
+
+## Tips for new users
+
+- **Use the new port every time.** After hardening, SSH is no longer on port 22. Always connect with:
+  ```bash
+  ssh -p <YOUR_PORT> <USER>@<SERVER_IP>
+  ```
+  Example: `ssh -p 49221 kamaileo@192.168.1.100`
+
+- **Save the script output when it finishes.** At the end the script prints a summary with your user, port, connect command, and whether a password was set. Copy or screenshot that block and keep it somewhere safe. If you lose your SSH key, forget the port, or forget the password, that record will help you recover or reconnect (e.g. via console/VNC using the same user and password).
+
+- The script outputs everything you need: user, port, UFW/Fail2Ban status, and the exact `ssh -p ...` command. No guesswork.
 
 ---
 
@@ -142,6 +164,16 @@ On unsupported OSes the script prints **Coming soon 😊** and exits without cha
 - Set **`SSH_PUB_KEY`** so you can still log in after password auth is disabled.
 - Test on a **VM or disposable server** first.
 - Keep your current session open until you’ve tested `ssh -p PORT user@server`.
+
+---
+
+## Buy me a coffee
+
+If this script saved you time or a headache, you can support the project with a one-off tip.
+
+**BTC:** `3L1Gc4avD4Bqoi2F9aq6z4heT13fXA8DZ9`
+
+Thanks either way.
 
 ---
 

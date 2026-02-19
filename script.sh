@@ -133,11 +133,16 @@ echo
 
 progress_bar "Starting"
 
+echo
 info "Updating package index..."
 apt-get update -y >/dev/null 2>&1 || warn "apt update had issues, continuing."
 
+echo
+echo -e "${BOLD}--- User & SSH key ---${RESET}"
 info "Checking user ${SSH_USER}..."
+USER_EXISTED=false
 if id "$SSH_USER" &>/dev/null; then
+  USER_EXISTED=true
   warn "User ${SSH_USER} already exists; skipping user creation and password change. Doing hardening only."
   usermod -aG sudo "$SSH_USER" 2>/dev/null || true
 else
@@ -160,6 +165,8 @@ else
   warn "No SSH_PUB_KEY; password login only."
 fi
 
+echo
+echo -e "${BOLD}--- SSH config ---${RESET}"
 SSHD_CONFIG="/etc/ssh/sshd_config"
 BACKUP="${SSHD_CONFIG}.bak.$(date +%F-%H%M%S)"
 info "Backing up sshd_config to ${BACKUP}"
@@ -203,6 +210,8 @@ else
   err "Could not restart SSH."
 fi
 
+echo
+echo -e "${BOLD}--- Firewall (UFW) ---${RESET}"
 if [[ "$INSTALL_UFW" == true ]]; then
   if dpkg -s ufw &>/dev/null; then
     success "UFW already installed."
@@ -210,21 +219,23 @@ if [[ "$INSTALL_UFW" == true ]]; then
     apt-get install -y ufw >/dev/null 2>&1 || warn "UFW install failed."
   fi
   if command -v ufw &>/dev/null; then
-    ufw default deny incoming 2>/dev/null || true
-    ufw default allow outgoing 2>/dev/null || true
-    ufw allow "${SSH_PORT}/tcp" 2>/dev/null || true
+    ufw default deny incoming >/dev/null 2>&1 || true
+    ufw default allow outgoing >/dev/null 2>&1 || true
+    ufw allow "${SSH_PORT}/tcp" >/dev/null 2>&1 || true
     IFS=',' read -ra PA <<< "$EXTRA_PORTS"
     for p in "${PA[@]}"; do
       [[ -z "$p" ]] && continue
-      ufw allow $p 2>/dev/null || true
+      ufw allow $p >/dev/null 2>&1 || true
     done
-    ufw --force enable 2>/dev/null || true
+    ufw --force enable >/dev/null 2>&1 || true
     success "UFW configured."
   fi
 else
   warn "UFW skipped."
 fi
 
+echo
+echo -e "${BOLD}--- Fail2Ban ---${RESET}"
 if [[ "$INSTALL_F2B" == true ]]; then
   if dpkg -s fail2ban &>/dev/null; then
     success "Fail2Ban already installed."
@@ -259,9 +270,29 @@ if [[ "$DISTRO_ID" == ubuntu && -x "./ubuntu/ssh_harden_extra.sh" ]]; then
   ./ubuntu/ssh_harden_extra.sh || warn "Ubuntu extra script failed."
 fi
 
+if [[ "$USER_EXISTED" == true ]]; then
+  PASS_NOTE="(unchanged — user already existed)"
+else
+  PASS_NOTE="(set for new user)"
+fi
+
 echo
-echo -e "${GREEN}${BOLD}========= SSH HARDENING DONE =========${RESET}"
-echo -e "  ${BOLD}User:${RESET} ${SSH_USER}   ${BOLD}Port:${RESET} ${SSH_PORT}"
-echo -e "  ${BOLD}UFW:${RESET} $([[ "$INSTALL_UFW" == true ]] && echo 'on' || echo 'skipped')   ${BOLD}Fail2Ban:${RESET} $([[ "$INSTALL_F2B" == true ]] && echo 'on' || echo 'skipped')"
-echo -e "  ${CYAN}ssh -p ${SSH_PORT} ${SSH_USER}@<server>${RESET}"
+echo -e "${GREEN}${BOLD}============================================${RESET}"
+echo -e "${GREEN}${BOLD}        SSH HARDENING COMPLETE${RESET}"
+echo -e "${GREEN}${BOLD}============================================${RESET}"
+echo
+echo -e "${YELLOW}${BOLD}  SAVE THIS OUTPUT — you may need it later.${RESET}"
+echo -e "${YELLOW}  If you lose your SSH key, port, or password, this is your record.${RESET}"
+echo
+echo -e "  ${BOLD}SSH user:${RESET}     ${SSH_USER}"
+echo -e "  ${BOLD}SSH port:${RESET}    ${SSH_PORT}"
+echo -e "  ${BOLD}Password:${RESET}    ${PASS_NOTE}"
+echo -e "  ${BOLD}SSH key:${RESET}    $( [[ -n "$SSH_PUB_KEY" ]] && echo 'yes (authorized_keys set)' || echo 'no' )"
+echo -e "  ${BOLD}UFW:${RESET}         $([[ "$INSTALL_UFW" == true ]] && echo 'on' || echo 'skipped')"
+echo -e "  ${BOLD}Fail2Ban:${RESET}    $([[ "$INSTALL_F2B" == true ]] && echo 'on' || echo 'skipped')"
+echo
+echo -e "  ${BOLD}Connect from your PC (use -p and this port):${RESET}"
+echo -e "  ${CYAN}  ssh -p ${SSH_PORT} ${SSH_USER}@<YOUR_SERVER_IP>${RESET}"
+echo
+echo -e "  ${BOLD}Backup of sshd_config:${RESET} ${SSHD_CONFIG}.bak.*"
 echo

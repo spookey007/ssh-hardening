@@ -1,0 +1,22 @@
+# Marketing (drafts, local notes)
+marketing/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor / IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs and temp
+*.log
+*.tmp
+.cache/
+
+# Local env or secrets (if you ever use a .env)
+.env
+.env.local
