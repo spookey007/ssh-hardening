@@ -24,21 +24,13 @@ sudo apt-get install -y git
 
 ### 2️⃣ Clone the repo and enter the folder
 
-**First time:**
-
 ```bash
+rm -rf ssh-hardening
 git clone https://github.com/spookey007/ssh-hardening.git
 cd ssh-hardening
 ```
 
-**Already have the folder?** Don’t clone again — go in and update:
-
-```bash
-cd ssh-hardening
-git pull
-```
-
-*(If you get “destination path already exists”, you already have it; use `cd ssh-hardening` then `git pull` to get the latest script.)*
+Run this anytime you want the latest script.
 
 ### 3️⃣ Make the scripts executable
 
