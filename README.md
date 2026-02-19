@@ -38,18 +38,18 @@ One-command SSH lockdown for **Debian** and **Ubuntu**. Stop leaving your server
 
 Debian and Ubuntu use the same package and service names (apt, ssh/sshd, ufw, fail2ban), so the script is written for that family. Only the row below is officially tested; others are expected to work but not yet verified.
 
-| OS | Supported | Tested | Notes |
-|----|-----------|--------|-------|
-| **Debian 12 x64** | ✅ | ✅ | Fully tested; recommended. |
-| Debian 11 x64 | ✅ | ❌ | Same stack as 12; expected to work. |
-| Debian 10 x64 | ✅ | ❌ | Expected to work. |
-| Ubuntu 24.04 LTS x64 | ✅ | ❌ | Debian-based; expected to work. |
-| Ubuntu 22.04 LTS x64 | ✅ | ❌ | Debian-based; expected to work. |
-| Ubuntu 20.04 LTS x64 | ✅ | ❌ | Debian-based; expected to work. |
-| Other Debian/Ubuntu derivatives | ✅ | ❌ | Use at your own risk. |
-| RHEL / Rocky / Alma / CentOS | ❌ | ❌ | Coming soon. |
-| Fedora | ❌ | ❌ | Coming soon. |
-| Other (e.g. Arch, openSUSE) | ❌ | ❌ | Coming soon. |
+| OS | Supported | Tested | Notes | Git install command |
+|----|-----------|--------|-------|---------------------|
+| **Debian 12 x64** | ✅ | ✅ | Fully tested; recommended. | `sudo apt-get install -y git` |
+| Debian 11 x64 | ✅ | ❌ | Same stack as 12; expected to work. | `sudo apt-get install -y git` |
+| Debian 10 x64 | ✅ | ❌ | Expected to work. | `sudo apt-get install -y git` |
+| Ubuntu 24.04 LTS x64 | ✅ | ❌ | Debian-based; expected to work. | `sudo apt-get install -y git` |
+| Ubuntu 22.04 LTS x64 | ✅ | ❌ | Debian-based; expected to work. | `sudo apt-get install -y git` |
+| Ubuntu 20.04 LTS x64 | ✅ | ❌ | Debian-based; expected to work. | `sudo apt-get install -y git` |
+| Other Debian/Ubuntu derivatives | ✅ | ❌ | Use at your own risk. | `sudo apt-get install -y git` |
+| RHEL / Rocky / Alma / CentOS | ❌ | ❌ | Coming soon. | `sudo yum install -y git` |
+| Fedora | ❌ | ❌ | Coming soon. | `sudo dnf install -y git` |
+| Other (e.g. Arch, openSUSE) | ❌ | ❌ | Coming soon. | Arch: `sudo pacman -Syu git`, openSUSE: `sudo zypper install -y git` |
 
 If you run the script on an unsupported OS, it will detect it and print **Coming soon 😊** instead of making changes. No harm done.
 
